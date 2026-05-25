@@ -1,10 +1,10 @@
 # ChatApp Part 2
 
 ## Student Information
-  Name: Iminathi Njoloza
-  Student Number: ST10513749
-  Module: Programming 1A
-  Module Code: PROG5121
+  -Name: Iminathi Njoloza;
+  -Student Number: ST10513749;
+  -Module: Programming 1A;
+  -Module Code: PROG5121.
 
 ---
 
