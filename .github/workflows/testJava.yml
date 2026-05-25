@@ -1,0 +1,16 @@
+# .github/workflows/testJava.yml 
+name: Java CI 
+
+on: [push]   # runs every time you push to GitHub 
+jobs: 
+  build: 
+    runs-on: ubuntu-latest 
+    steps: 
+	- uses: actions/checkout@v3 
+	- name: Set up JDK 
+	uses: actions/setup-java@v3 
+	with: 
+	  java-version: '17' 
+	  distribution: 'temurin' 
+	- name: Build and run all tests with Maven 
+	    run: mvn test   # picks up LoginTest AND MessageTest automatically 
