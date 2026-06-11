@@ -4,6 +4,9 @@
  */
 package com.mycompany.mychatapp;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -14,8 +17,12 @@ public class MessagesTest {
     private Messages message;
 
     @BeforeEach
-    public void setUp() {
+    public void setUp() throws IOException {
 
+        Messages.resetPart3Data();
+        Path testMessageFile = Path.of("target", "test-messages.json");
+        Files.deleteIfExists(testMessageFile);
+        Messages.setMessageFileForTesting(testMessageFile);
         message = new Messages("+27123456789", "Hi tonight");
     }
 
@@ -137,5 +144,91 @@ public class MessagesTest {
 
             message.printMessages();
         });
+    }
+
+    @Test
+    public void testSentMessagesArray_correctlyPopulated() {
+
+        Messages msg1 =
+                new Messages("+27834557896", "Did you get the cake?");
+        Messages msg4 =
+                new Messages("0838884567", "It is dinner time!", "0838884567");
+
+        msg1.sentMessage(1);
+        msg4.sentMessage(1);
+
+        assertTrue(Messages.getSentMessages().contains("Did you get the cake?"));
+        assertTrue(Messages.getSentMessages().contains("It is dinner time!"));
+    }
+
+    @Test
+    public void testDisplayLongestMessage_returnsCorrectMessage() {
+
+        Messages.getStoredMessages().add("Did you get the cake?");
+        Messages.getStoredMessages().add("Where are you? You are late! I have asked you to be on time.");
+        Messages.getStoredMessages().add("Yohoooo, I am at your gate.");
+        Messages.getStoredMessages().add("It is dinner time!");
+        Messages.getStoredMessages().add("Ok, I am leaving without you.");
+
+        String expected =
+                "Where are you? You are late! I have asked you to be on time.";
+
+        assertEquals(expected, Messages.displayLongestStoredMessage());
+    }
+
+    @Test
+    public void testSearchByMessageID_returnsCorrectMessage() {
+
+        Messages msg4 =
+                new Messages("0838884567", "It is dinner time!", "0838884567");
+        msg4.sentMessage(1);
+
+        String result = Messages.searchByMessageID("0838884567");
+
+        assertTrue(result.contains("It is dinner time!"));
+    }
+
+    @Test
+    public void testSearchByRecipient_returnsAllMatchingMessages() {
+
+        Messages msg2 =
+                new Messages("+27838884567", "Where are you? You are late! I have asked you to be on time.");
+        Messages msg5 =
+                new Messages("+27838884567", "Ok, I am leaving without you.");
+
+        msg2.sentMessage(1);
+        msg5.sentMessage(1);
+
+        String result = Messages.searchByRecipient("+27838884567");
+
+        assertTrue(result.contains("Where are you? You are late! I have asked you to be on time."));
+        assertTrue(result.contains("Ok, I am leaving without you."));
+    }
+
+    @Test
+    public void testDeleteByHash_removesCorrectMessage() {
+
+        Messages msg2 =
+                new Messages("+27838884567", "Where are you? You are late! I have asked you to be on time.");
+        msg2.sentMessage(1);
+
+        String result = Messages.deleteByHash(msg2.getMessageHash());
+
+        assertEquals("Message: Where are you? You are late! I have asked you to be on time. successfully deleted.", result);
+        assertFalse(Messages.getSentMessages().contains("Where are you? You are late! I have asked you to be on time."));
+    }
+
+    @Test
+    public void testDisplayReport_containsRequiredFields() {
+
+        Messages msg1 =
+                new Messages("+27834557896", "Did you get the cake?");
+        msg1.sentMessage(1);
+
+        String report = Messages.displayStoredReport();
+
+        assertTrue(report.contains(msg1.getMessageHash()));
+        assertTrue(report.contains("+27834557896"));
+        assertTrue(report.contains("Did you get the cake?"));
     }
 }
