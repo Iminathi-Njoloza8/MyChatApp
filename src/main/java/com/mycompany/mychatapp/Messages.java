@@ -7,8 +7,8 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import org.json.JSONArray;
-import org.json.JSONObject;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Messages {
 
@@ -104,14 +104,15 @@ public class Messages {
     }
 
     public void storeMessage() {
-        JSONObject json = new JSONObject();
-        json.put("messageID", messageID);
-        json.put("messageHash", messageHash);
-        json.put("recipient", recipient);
-        json.put("message", message);
+        String json = "{\n"
+                + "\"messageID\":\"" + escapeJson(messageID) + "\",\n"
+                + "\"messageHash\":\"" + escapeJson(messageHash) + "\",\n"
+                + "\"recipient\":\"" + escapeJson(recipient) + "\",\n"
+                + "\"message\":\"" + escapeJson(message) + "\"\n"
+                + "}";
 
         try {
-            Files.writeString(messageFile, json.toString() + System.lineSeparator(),
+            Files.writeString(messageFile, json + System.lineSeparator(),
                     java.nio.file.StandardOpenOption.CREATE,
                     java.nio.file.StandardOpenOption.APPEND);
             System.out.println("Message successfully stored.");
@@ -301,7 +302,7 @@ public class Messages {
         return printAndReturn(report.toString().trim());
     }
 
-    // Attribution: org.json library - https://mvnrepository.com/artifact/org.json/json
+    // Reads the simple JSON objects written by storeMessage() into the stored message arrays.
     public static void loadStoredMessages() {
         storedMessages.clear();
         storedMessageIDs.clear();
@@ -318,22 +319,65 @@ public class Messages {
                 return;
             }
 
-            JSONArray storedJsonMessages = new JSONArray("["
-                    + jsonContent.replaceAll("}\\s*\\{", "},{")
-                    + "]");
-            for (int i = 0; i < storedJsonMessages.length(); i++) {
-                addStoredMessage(storedJsonMessages.getJSONObject(i));
+            Matcher objectMatcher = Pattern.compile("\\{([^}]*)\\}", Pattern.DOTALL).matcher(jsonContent);
+            while (objectMatcher.find()) {
+                addStoredMessage(objectMatcher.group(1));
             }
         } catch (Exception e) {
             System.out.println("No stored messages could be loaded.");
         }
     }
 
-    private static void addStoredMessage(JSONObject jsonObject) {
-        storedMessageIDs.add(jsonObject.optString("messageID"));
-        storedMessageHashes.add(jsonObject.optString("messageHash"));
-        storedRecipients.add(jsonObject.optString("recipient"));
-        storedMessages.add(jsonObject.optString("message"));
+    private static void addStoredMessage(String jsonObject) {
+        storedMessageIDs.add(extractJsonValue(jsonObject, "messageID"));
+        storedMessageHashes.add(extractJsonValue(jsonObject, "messageHash"));
+        storedRecipients.add(extractJsonValue(jsonObject, "recipient"));
+        storedMessages.add(extractJsonValue(jsonObject, "message"));
+    }
+
+    private static String extractJsonValue(String jsonObject, String key) {
+        String pattern = "\"" + Pattern.quote(key) + "\"\\s*:\\s*\"((?:\\\\.|[^\"])*)\"";
+        Matcher matcher = Pattern.compile(pattern).matcher(jsonObject);
+        if (matcher.find()) {
+            return unescapeJson(matcher.group(1));
+        }
+        return "";
+    }
+
+    private static String escapeJson(String value) {
+        return value.replace("\\", "\\\\")
+                .replace("\"", "\\\"")
+                .replace("\r", "\\r")
+                .replace("\n", "\\n");
+    }
+
+    private static String unescapeJson(String value) {
+        StringBuilder result = new StringBuilder();
+        boolean escaped = false;
+
+        for (int i = 0; i < value.length(); i++) {
+            char current = value.charAt(i);
+
+            if (escaped) {
+                switch (current) {
+                    case 'n' -> result.append('\n');
+                    case 'r' -> result.append('\r');
+                    case '"' -> result.append('"');
+                    case '\\' -> result.append('\\');
+                    default -> result.append(current);
+                }
+                escaped = false;
+            } else if (current == '\\') {
+                escaped = true;
+            } else {
+                result.append(current);
+            }
+        }
+
+        if (escaped) {
+            result.append('\\');
+        }
+        return result.toString();
     }
 
     private static String printAndReturn(String output) {
