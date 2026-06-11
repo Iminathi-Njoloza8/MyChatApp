@@ -93,6 +93,9 @@ public class MainApp {
                 }
             }
             
+            //Load stored messages from JSON
+            Messages.loadStoredMessages();
+            
             boolean successPart2 = true;
             //If login is successful the system will display "Welcome to QuickChat".
             if (successPart2) {
@@ -108,6 +111,7 @@ public class MainApp {
                     System.out.println("1) Send Messages");
                     System.out.println("2) Show recently sent messages");
                     System.out.println("3) Quit");
+                    System.out.println("4) Stored Messages");
                     
                     //Gives the user an option to choose a number from the options above.
                     System.out.print("Choose option: ");
@@ -168,13 +172,13 @@ public class MainApp {
                                         
                                         //If the user chooses to send the message.
                                         case 1 -> {
-                                            System.out.println("Message successfully sent.");
+                                            System.out.println(msg.sentMessage(option));
                                             msg.printMessages();
                                         }
                                         
                                         //If the user chooses to disregard the message.
                                         case 2 -> {
-                                            System.out.println("Press 0 to delete message.");
+                                            System.out.println(msg.sentMessage(option));
                                             
                                             int delete = scanner.nextInt();
                                             scanner.nextLine();
@@ -186,7 +190,7 @@ public class MainApp {
                                         
                                         //If the user chooses to store the message.
                                         case 3 -> {
-                                            msg.storeMessage();
+                                            msg.sentMessage(option);
                                         }
                                         
                                         //If the user inputs an invalid number option.
@@ -207,9 +211,12 @@ public class MainApp {
                         
                         //If the user chooses to see recently sent messages.
                         case 2 -> System.out.println("Coming Soon.");
-                         
+                        
                         //If the suer chooses to quit the process.
                         case 3 -> System.out.println("Goodbye.");
+
+                        //This will show the stored message
+                        case 4 -> storedMessagesMenu(scanner);
                         
                         //If the user inputs an invalid number option.
                         default -> System.out.println("Invalid option.");
@@ -218,6 +225,60 @@ public class MainApp {
                 } while (choice != 3);
             }
         }
+    }
+    
+    public static void storedMessagesMenu(Scanner scanner) {
+
+        int option;
+        do {
+            System.out.println("\n===== STORED MESSAGES =====");
+            System.out.println("1) Display all stored messages");
+            System.out.println("2) Display longest stored message");
+            System.out.println("3) Search by Message ID");
+            System.out.println("4) Search by Recipient");
+            System.out.println("5) Delete by Message Hash");
+            System.out.println("6) Display Full Report");
+            System.out.println("7) Return to main menu");
+            System.out.print("Choose option: ");
+            option = scanner.nextInt();
+            scanner.nextLine();
+
+            switch (option) {
+
+                case 1 ->
+                    Messages.displayStoredSendersRecipients();
+
+                case 2 ->
+                    Messages.displayLongestStoredMessage();
+
+                case 3 -> {
+                    System.out.print("Enter Message ID: ");
+                    String id = scanner.nextLine();
+                    Messages.searchByMessageID(id);
+                }
+
+                case 4 -> {
+                    System.out.print("Enter Recipient: ");
+                    String recipient = scanner.nextLine();
+                    Messages.searchByRecipient(recipient);
+                }
+
+                case 5 -> {
+                    System.out.print("Enter Message Hash: ");
+                    String hash = scanner.nextLine();
+                    Messages.deleteByHash(hash);
+                }
+
+                case 6 ->
+                    Messages.displayStoredReport();
+
+                case 7 ->
+                    System.out.println("Returning to main menu.");
+
+                default ->
+                    System.out.println("Invalid option.");
+            }
+        } while (option != 7);
     }
 }
 
